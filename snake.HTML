@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f8f8f8;
+        }
+
+        canvas {
+            display: block;
+            margin: 10px;
+            background-color: #222;
+            border: 3px solid #333;
+        }
+
+        p {
+            font-size: 24px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <p>Score: <span id="score">0</span></p>
+    <p>Record: <span id="record">0</span></p>
+	<script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const recordElement = document.getElementById('record');
+        const gridSize = 20;
+        const snakeSize = 20;
+        let snake = [{ x: 200, y: 200 }];
+        let food = { x: 300, y: 300 };
+        let dx = -snakeSize;
+        let dy = 0;
+        let gameOver = false;
+        let score = 0;
+        let record = localStorage.getItem('snakeRecord') || 0;
+
+        recordElement.textContent = record;
+
+        function drawSnake() {
+            ctx.fillStyle = 'green';
+            for (const segment of snake) {
+                ctx.fillRect(segment.x, segment.y, snakeSize, snakeSize);
+            }
+        }
+
+        const appleImage = new Image();
+        appleImage.src = 'apple.png';
+
+        function drawFood() {
+            ctx.drawImage(appleImage, food.x, food.y, snakeSize, snakeSize);
+        }
+
+        function updateSnake() {
+            const newX = snake[0].x + dx;
+            const newY = snake[0].y + dy;
+
+            if (newX < 0 || newX >= canvas.width || newY < 0 || newY >= canvas.height || snake.some(segment => segment.x === newX && segment.y === newY)) {
+                gameOver = true;
+                return;
+            }
+
+            snake.unshift({ x: newX, y: newY });
+            if (newX === food.x && newY === food.y) {
+                generateNewFood();
+                updateScore();
+            } else {
+                snake.pop();
+            }
+        }
+
+        function generateNewFood() {
+            food.x = Math.floor(Math.random() * gridSize) * snakeSize;
+            food.y = Math.floor(Math.random() * gridSize) * snakeSize;
+        }
+
+        function changeDirection(e) {
+            if ((e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') && dy === 0) {
+                dx = 0;
+                dy = -snakeSize;
+            } else if ((e.key === 'ArrowDown' || e.key.toLowerCase() === 's') && dy === 0) {
+                dx = 0;
+                dy = snakeSize;
+            } else if ((e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') && dx === 0) {
+                dx = -snakeSize;
+                dy = 0;
+            } else if ((e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') && dx === 0) {
+                dx = snakeSize;
+                dy = 0;
+            }
+        }
+
+        function updateScore() {
+            score += 10;
+            scoreElement.textContent = score;
+
+            if (score > record) {
+                record = score;
+                recordElement.textContent = record;
+                localStorage.setItem('snakeRecord', record);
+            }
+        }
+
+		function resetGame() {
+            snake = [{ x: 200, y: 200 }];
+            food = { x: 300, y: 300 };
+            dx = -snakeSize;
+            dy = 0;
+            gameOver = false;
+            score = 0;
+            scoreElement.textContent = score;
+        }
+
+        function gameLoop() {
+            if (gameOver) {
+                alert('Game Over!');
+                resetGame();
+            }
+
+            setTimeout(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawSnake();
+                drawFood();
+                updateSnake();
+                gameLoop();
+            }, 100);
+        }
+
+        document.addEventListener('keydown', changeDirection);
+        gameLoop();
+    </script>
+</body>
+</html>
